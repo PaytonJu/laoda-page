@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存档 · 青春</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #1a0f0a;
+            --text-primary: #f5ede4;
+            --text-secondary: #c4b5a5;
+            --text-muted: #8a7a6a;
+            --accent: #d4a574;
+            --accent-light: #e8c9a6;
+            --accent-glow: rgba(212, 165, 116, 0.3);
+            --section-gap: 3rem;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.8;
+            background: #1a0f0a;
+        }
+
+        /* ===== 背景 ===== */
+        .bg-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .bg-image {
+            position: absolute;
+            inset: -30px; /* 扩大防止边缘露白 */
+            background-image: url('background.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(20px);
+            transform: scale(1.1);
+        }
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(26, 15, 10, 0.5);
+        }
+
+        /* ===== 密码锁 ===== */
+        .lock-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(26, 15, 10, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .lock-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-box {
+            text-align: center;
+            padding: 3rem 2.5rem;
+            max-width: 420px;
+            width: 90%;
+        }
+        .lock-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+        .lock-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+        .lock-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        .lock-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-family: 'Noto Sans SC', sans-serif;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+        }
+        .lock-input:focus {
+            border-color: var(--accent);
+        }
+        .lock-input::placeholder {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .lock-btn {
+            margin-top: 1.2rem;
+            padding: 0.8rem 2.5rem;
+            background: var(--accent);
+            color: #1a0f0a;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .lock-btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-1px);
+        }
+        .lock-error {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            min-height: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .lock-error.show {
+            opacity: 1;
+        }
+        .lock-footer {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
+        /* ===== 毛玻璃面板（增强版） ===== */
+        .glass {
+            background: rgba(255, 245, 235, 0.07);
+            backdrop-filter: blur(18px) saturate(1.3);
+            -webkit-backdrop-filter: blur(18px) saturate(1.3);
+            border: 1px solid rgba(255, 245, 235, 0.10);
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+        .glass:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+        }
+        .glass::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.3;
+        }
+
+        /* ===== 容器 ===== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        .hero-quote {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #f5ede4 0%, #d4a574 50%, #e8c9a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            animation: fadeUp 1s ease-out;
+        }
+        .hero-sub {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            letter-spacing: 0.15em;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            animation: fadeUp 1s ease-out 0.2s backwards;
+        }
+        .hero-desc {
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
+            color: var(--text-secondary);
+            max-width: 400px;
+            line-height: 1.6;
+            animation: fadeUp 1s ease-out 0.4s backwards;
+        }
+        .hero-scroll {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ===== 内容区域 ===== */
+        .main-content {
+            padding-bottom: 6rem;
+        }
+
+        .section {
+            margin-bottom: var(--section-gap);
+            animation: fadeUp 0.8s ease-out both;
+        }
+
+        .section-inner {
+            padding: 2.5rem 2rem;
+        }
+
+        .section-number {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 0.8rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            margin-bottom: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .section-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            color: var(--accent-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+        }
+
+        .section-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 2;
+            margin-bottom: 1.2rem;
+        }
+        .section-text:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-text .highlight {
+            color: var(--accent-light);
+            font-weight: 500;
+        }
+
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 2rem 0;
+            opacity: 0.5;
+        }
+
+        .quote-block {
+            border-left: 2px solid var(--accent);
+            padding: 1rem 0 1rem 1.5rem;
+            margin: 1.5rem 0;
+            background: rgba(212, 165, 116, 0.06);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .quote-block p {
+            color: var(--text-primary);
+            font-style: normal;
+            margin-bottom: 0.3rem;
+        }
+
+        .custom-list {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        .custom-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+        }
+        .custom-list li::before {
+            content: '·';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .epilogue {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .epilogue-text {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            color: var(--accent-light);
+            line-height: 2;
+        }
+
+        /* ===== 导航 ===== */
+        .nav-dots {
+            position: fixed;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+            transform: scale(1.3);
+        }
+        .nav-dot:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* ===== 动画 ===== */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        @media (max-width: 640px) {
+            .section-inner { padding: 1.5rem; }
+            .nav-dots { right: 0.8rem; }
+            .hero-quote { margin-bottom: 1.5rem; }
+            .lock-box { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 背景 ===== -->
+<div class="bg-container">
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+</div>
+
+<!-- ===== 密码锁 ===== -->
+<div class="lock-screen" id="lockScreen">
+    <div class="glass lock-box">
+        <div class="lock-icon"><i class="fa-regular fa-hourglass-half"></i></div>
+        <div class="lock-title">一段存档</div>
+        <div class="lock-hint">提示：我的老大是谁</div>
+        <input class="lock-input" type="text" id="passwordInput" placeholder="输入中文密码" onkeydown="if(event.key==='Enter')checkPassword()">
+        <button class="lock-btn" onclick="checkPassword()">打开</button>
+        <div class="lock-error" id="lockError">密码不对，再想想</div>
+        <div class="lock-footer">— 青春存档 —</div>
+    </div>
+</div>
+
+<!-- ===== 导航点 ===== -->
+<nav class="nav-dots" id="navDots" aria-label="章节导航"></nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+    <div class="hero-sub">—— 她的第一反应 ——</div>
+    <h1 class="hero-quote">我都不知道<br>这是什么东西</h1>
+    <p class="hero-desc">她说这句话的时候，没有犹豫。<br>这就是她，真实到让人不知道怎么接。</p>
+    <div class="hero-scroll">
+        <span>往下翻</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;"></i>
+    </div>
+</section>
+
+<!-- ===== 正文 ===== -->
+<div class="main-content">
+    <div class="container">
+
+        <!-- 前言 -->
+        <section class="section glass" data-section="0">
+            <div class="section-inner">
+                <div class="section-number">00 · 前言</div>
+                <h2 class="section-title">如果要用一句话概括她</h2>
+                <p class="section-text">那大概是：</p>
+                <div class="quote-block">
+                    <p>「她曾经真实地出现在我的青春里。」</p>
+                </div>
+                <p class="section-text">这个页面并不是为了挽留谁，<br>也不是为了证明什么。</p>
+                <p class="section-text">只是想给那段时间留一个存档。</p>
+                <p class="section-text">因为我知道，<br>很多年以后，<br>我会忘掉很多细节。</p>
+                <p class="section-text">但我依然希望：</p>
+                <p class="section-text">至少还能记得，<br>曾经有那么一个人，<br>让我在青春期第一次真正理解了：</p>
+                <p class="section-text">喜欢、陪伴、失落、成长，<br>到底是什么感觉。</p>
+            </div>
+        </section>
+
+        <!-- 关于她 -->
+        <section class="section glass" data-section="1">
+            <div class="section-inner">
+                <div class="section-number">01 · 关于她</div>
+                <h2 class="section-title">她是我初中时期最特别的人</h2>
+                <p class="section-text">我以前一直喊她"<span class="highlight">老大</span>"，<br>她有时会叫我"<span class="highlight">废物小弟</span>"。</p>
+                <p class="section-text">这不是什么贬低，<br>只是属于我们之间的称呼。</p>
+                <div class="divider"></div>
+                <p class="section-text">她的性格其实并不完美。</p>
+                <p class="section-text">有些固执，<br>有时情绪不稳定，<br>不喜欢解释自己，<br>也不喜欢被人束缚。</p>
+                <p class="section-text">她喜欢独处，<br>有自己的节奏。</p>
+                <p class="section-text">但与此同时：</p>
+                <p class="section-text">她也真实、鲜活，<br>会在一些瞬间突然很温柔。</p>
+                <p class="section-text">她会陪我聊天，<br>会在我状态不好的时候安慰我，<br>会和我一起出去遛狗，<br>会抱我，<br>也会在某些时候，<br>默默纵容我的靠近。</p>
+                <p class="section-text">我曾经很长一段时间都觉得：</p>
+                <p class="section-text">有她在身边，<br>生活会亮一点。</p>
+            </div>
+        </section>
+
+        <!-- 关于我们 -->
+        <section class="section glass" data-section="2">
+            <div class="section-inner">
+                <div class="section-number">02 · 关于我们</div>
+                <h2 class="section-title">我们并不是一开始就互相喜欢</h2>
+                <p class="section-text">最开始，<br>只是关系很好。</p>
+                <p class="section-text">后来，<br>我开始慢慢发现：</p>
+                <p class="section-text">我会下意识找她，<br>会期待她的消息，<br>会在人群里第一眼看她。</p>
+                <div class="divider"></div>
+                <p class="section-text">我曾经暗恋了她很久。</p>
+                <p class="section-text">后来，<br>我终于鼓起勇气向她表白。</p>
+                <p class="section-text">她没有拒绝我。</p>
+                <p class="section-text">她告诉我：</p>
+                <div class="quote-block">
+                    <p>「等中考以后再说。」</p>
+                </div>
+                <p class="section-text">那是我第一次真正知道：</p>
+                <p class="section-text">原来她也喜欢我。</p>
+                <p class="section-text">那段时间，<br>大概是我整个初中最开心的时候。</p>
+            </div>
+        </section>
+
+        <!-- 后来的变化 -->
+        <section class="section glass" data-section="3">
+            <div class="section-inner">
+                <div class="section-number">03 · 后来的变化</div>
+                <h2 class="section-title">但青春期的人，其实都还不够成熟</h2>
+                <p class="section-text">包括我。</p>
+                <p class="section-text">我开始过度投入。</p>
+                <p class="section-text">会反复等她消息，<br>会因为她和别人聊天而难受，<br>会因为情绪冲动删好友，<br>也会因为不安而说出伤人的话。</p>
+                <div class="divider"></div>
+                <p class="section-text">而她：<br>不喜欢被束缚，<br>也不喜欢处理太复杂的情绪。</p>
+                <p class="section-text">于是：</p>
+                <p class="section-text">我们开始争吵，<br>开始冷战，<br>开始慢慢变远。</p>
+                <p class="section-text">后来我才知道：</p>
+                <div class="quote-block">
+                    <p>喜欢一个人，<br>和"会经营关系"，<br>其实是两回事。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 那时候的我 -->
+        <section class="section glass" data-section="4">
+            <div class="section-inner">
+                <div class="section-number">04 · 那时候的我</div>
+                <h2 class="section-title">那时的我，把太多情绪都放在了一个人身上</h2>
+                <p class="section-text">一天会打开微信很多次。</p>
+                <p class="section-text">会因为一句话开心很久，<br>也会因为不回复难受一整天。</p>
+                <p class="section-text">我总是害怕失去。</p>
+                <p class="section-text">于是：</p>
+                <p class="section-text">越想靠近，<br>反而越容易失控。</p>
+                <div class="divider"></div>
+                <p class="section-text">后来我才慢慢学会：</p>
+                <div class="quote-block">
+                    <p>真正健康的喜欢，<br>不应该让自己失去生活重心。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 关于成长 -->
+        <section class="section glass" data-section="5">
+            <div class="section-inner">
+                <div class="section-number">05 · 关于成长</div>
+                <h2 class="section-title">现在回头看</h2>
+                <p class="section-text">我已经不再执着于：</p>
+                <p class="section-text">"她到底还喜不喜欢我。"</p>
+                <p class="section-text">因为有些关系，<br>并不是"真假问题"。</p>
+                <p class="section-text">而是：</p>
+                <div class="quote-block">
+                    <p>它曾经真实存在过，<br>后来又随着时间慢慢退场。</p>
+                </div>
+                <p class="section-text">我们都在长大。</p>
+                <p class="section-text">也都会走向不同的人生。</p>
+                <p class="section-text">她会有她的生活，<br>我也会有我的未来。</p>
+                <p class="section-text">但这不代表：</p>
+                <p class="section-text">过去的一切没有意义。</p>
+            </div>
+        </section>
+
+        <!-- 她留下的东西 -->
+        <section class="section glass" data-section="6">
+            <div class="section-inner">
+                <div class="section-number">06 · 她留下的东西</div>
+                <h2 class="section-title">直到现在</h2>
+                <p class="section-text">我偶尔还是会下意识看向她。</p>
+                <p class="section-text">听到别人喊她名字时，<br>也还是会有一点本能反应。</p>
+                <p class="section-text">但我已经不会再像以前那样，<br>因为情绪失控。</p>
+                <div class="divider"></div>
+                <p class="section-text">她留给我的，<br>已经不再只是"喜欢"。</p>
+                <p class="section-text">而是：</p>
+                <ul class="custom-list">
+                    <li>第一次真正心动</li>
+                    <li>第一次亲密关系</li>
+                    <li>第一次失去</li>
+                    <li>第一次学会边界感</li>
+                    <li>第一次理解成长的代价</li>
+                </ul>
+                <p class="section-text">以及：</p>
+                <p class="section-text">第一次真正开始认识自己。</p>
+            </div>
+        </section>
+
+        <!-- 关于这个页面 -->
+        <section class="section glass" data-section="7">
+            <div class="section-inner">
+                <div class="section-number">07 · 关于这个页面</div>
+                <h2 class="section-title">我问过她</h2>
+                <p class="section-text">"你想在这里留下点什么吗？"</p>
+                <div class="quote-block">
+                    <p>「我都不知道这是什么东西。」</p>
+                </div>
+                <p class="section-text">于是，我决定把这句话留下来。</p>
+                <p class="section-text">因为它很像她。</p>
+                <p class="section-text">真实、<br>自然、<br>甚至有点莫名其妙。</p>
+                <p class="section-text">但也正因如此：</p>
+                <p class="section-text">它才属于那段青春。</p>
+            </div>
+        </section>
+
+        <!-- 最后的话 -->
+        <section class="section glass" data-section="8">
+            <div class="section-inner">
+                <div class="section-number">08 · 最后的话</div>
+                <h2 class="section-title">后来我们还是走散了</h2>
+                <p class="section-text">也许很多年以后，<br>我们都不会再频繁联系。</p>
+                <p class="section-text">甚至可能：</p>
+                <p class="section-text">慢慢变成彼此人生里一个很久远的名字。</p>
+                <div class="divider"></div>
+                <p class="section-text">但至少在那几年里：</p>
+                <div class="epilogue">
+                    <p class="epilogue-text">她曾经是我的老大。</p>
+                    <p class="epilogue-text">而我，<br>也真的当过她的小弟。</p>
+                    <p class="section-text" style="margin-top:2rem; color:var(--text-muted);">这就够了。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 后记 -->
+        <section class="section glass" data-section="9">
+            <div class="section-inner">
+                <div class="section-number">09 &middot; 后记</div>
+                <h2 class="section-title">后来</h2>
+                <p class="section-text">后来，她中考考了622分。</p>
+                <p class="section-text">我问她，你打算去哪？</p>
+                <div class="quote-block">
+                    <p>她说，都行吧。青山也行，太湖也行。</p>
+                </div>
+                <div class="divider"></div>
+                <p class="section-text" style="color:var(--text-muted); font-size:0.9rem;">&mdash; 存档至此，青春落幕。</p>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+    // ===== 密码验证 =====
+    const CORRECT_PASSWORD = '邓香凝';
+
+    function checkPassword() {
+        const input = document.getElementById('passwordInput');
+        const error = document.getElementById('lockError');
+        if (input.value.trim() === CORRECT_PASSWORD) {
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        } else {
+            error.classList.add('show');
+            input.value = '';
+            input.focus();
+            setTimeout(() => error.classList.remove('show'), 2500);
+        }
+    }
+
+    // ===== 导航点 =====
+    const sections = document.querySelectorAll('.section');
+    const navDots = document.getElementById('navDots');
+    const sectionNames = ['前言', '关于她', '关于我们', '后来的变化', '那时候的我', '关于成长', '她留下的东西', '关于这个页面', '最后的话', '后记'];
+
+    sectionNames.forEach((name, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'nav-dot';
+        dot.setAttribute('aria-label', name);
+        dot.setAttribute('title', name);
+        dot.dataset.index = i;
+        dot.addEventListener('click', () => {
+            const target = document.querySelector(`[data-section="${i}"]`);
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+        navDots.appendChild(dot);
+    });
+
+    // ===== 滚动动画 =====
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeUp 0.8s ease-out';
+                entry.target.style.opacity = '1';
+            }
+        });
+    }, { threshold: 0.15 });
+
+    sections.forEach(s => {
+        s.style.opacity = '0';
+        sectionObserver.observe(s);
+    });
+
+    // ===== 导航高亮 =====
+    const dots = document.querySelectorAll('.nav-dot');
+
+    const navObserver = new IntersectionObserver((entries) => {
+        let activeIndex = -1;
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const idx = entry.target.dataset.section;
+                if (idx !== undefined && Number(idx) > activeIndex) {
+                    activeIndex = Number(idx);
+                }
+            }
+        });
+        if (activeIndex >= 0) {
+            dots.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+        }
+    }, { threshold: 0.3 });
+
+    sections.forEach(s => navObserver.observe(s));
+
+    // 默认隐藏滚动条直到解锁
+    document.body.style.overflow = 'hidden';
+</script>
+
+</body>
+</html>
