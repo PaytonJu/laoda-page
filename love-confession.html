@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月色轻铺万云片 · 晚风揉碎星千点</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #1a0a2e;
+            --text-primary: #f5ede4;
+            --text-secondary: #c4b5a5;
+            --text-muted: #8a7a6a;
+            --accent: #d4a574;
+            --accent-light: #e8c9a6;
+            --accent-glow: rgba(212, 165, 116, 0.3);
+            --section-gap: 3rem;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.8;
+            background: #1a0a2e;
+        }
+
+        /* ===== 背景 ===== */
+        .bg-container {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .bg-image {
+            position: absolute;
+            inset: -30px;
+            background:
+                radial-gradient(ellipse at 20% 30%, #4a1a5e 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, #2d1050 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, #1a0a2e 0%, #0d0518 100%);
+            filter: blur(20px);
+            transform: scale(1.1);
+        }
+        .bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(26, 10, 46, 0.3);
+        }
+
+        /* ===== 密码锁 ===== */
+        .lock-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(26,10,46,0.95) 0%, rgba(45,16,80,0.92) 50%, rgba(26,10,46,0.95) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .lock-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .lock-box {
+            text-align: center;
+            padding: 3rem 2.5rem;
+            max-width: 420px;
+            width: 90%;
+        }
+        .lock-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+        }
+        .lock-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+        }
+        .lock-hint {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+        .lock-input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 0.75rem;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-family: 'Noto Sans SC', sans-serif;
+            outline: none;
+            transition: border-color 0.3s;
+            text-align: center;
+        }
+        .lock-input:focus { border-color: var(--accent); }
+        .lock-input::placeholder { color: var(--text-muted); font-size: 0.9rem; }
+        .lock-btn {
+            margin-top: 1.2rem;
+            padding: 0.8rem 2.5rem;
+            background: var(--accent);
+            color: #1a0f0a;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .lock-btn:hover {
+            background: var(--accent-light);
+            transform: translateY(-1px);
+        }
+        .lock-error {
+            color: #e74c3c;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+            min-height: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .lock-error.show { opacity: 1; }
+        .lock-footer {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            opacity: 0.4;
+        }
+
+        /* ===== 毛玻璃面板 ===== */
+        .glass {
+            background: rgba(255, 245, 235, 0.07);
+            backdrop-filter: blur(18px) saturate(1.3);
+            -webkit-backdrop-filter: blur(18px) saturate(1.3);
+            border: 1px solid rgba(255, 245, 235, 0.10);
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+        .glass:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+        }
+        .glass::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0.3;
+        }
+
+        /* ===== 容器 ===== */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+        .hero-quote {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            line-height: 1.3;
+            background: linear-gradient(135deg, #f5ede4 0%, #d4a574 50%, #e8c9a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            animation: fadeUp 1s ease-out;
+        }
+        .hero-sub {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            letter-spacing: 0.15em;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            animation: fadeUp 1s ease-out 0.2s backwards;
+        }
+        .hero-scroll {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ===== 正文 ===== */
+        .main-content { padding-bottom: 6rem; }
+
+        .section {
+            margin-bottom: var(--section-gap);
+            animation: fadeUp 0.8s ease-out both;
+        }
+
+        .section-inner { padding: 2.5rem 2rem; }
+
+        .section-number {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 0.8rem;
+            color: var(--accent);
+            letter-spacing: 0.2em;
+            margin-bottom: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .section-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            color: var(--accent-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+        }
+
+        .section-text {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 2;
+            margin-bottom: 1.2rem;
+        }
+        .section-text:last-child { margin-bottom: 0; }
+
+        .section-text .highlight {
+            color: var(--accent-light);
+            font-weight: 500;
+        }
+
+        .divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin: 2rem 0;
+            opacity: 0.5;
+        }
+
+        .quote-block {
+            border-left: 2px solid var(--accent);
+            padding: 1rem 0 1rem 1.5rem;
+            margin: 1.5rem 0;
+            background: rgba(212, 165, 116, 0.06);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .quote-block p {
+            color: var(--text-primary);
+            font-style: normal;
+            margin-bottom: 0.3rem;
+        }
+
+        .epilogue {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        .epilogue-text {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+            color: var(--accent-light);
+            line-height: 2;
+        }
+
+        .epilogue-quote {
+            font-family: 'Noto Serif SC', serif;
+            font-size: clamp(1rem, 1.8vw, 1.3rem);
+            color: var(--accent-light);
+            line-height: 1.8;
+            margin-top: 1.5rem;
+        }
+
+        /* ===== 导航 ===== */
+        .nav-dots {
+            position: fixed;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+            transform: scale(1.3);
+        }
+        .nav-dot:hover { background: rgba(255,255,255,0.3); }
+
+        /* ===== 动画 ===== */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        @media (max-width: 640px) {
+            .section-inner { padding: 1.5rem; }
+            .nav-dots { right: 0.8rem; }
+            .lock-box { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 背景 ===== -->
+<div class="bg-container">
+    <div class="bg-image"></div>
+    <div class="bg-overlay"></div>
+</div>
+
+<!-- ===== 密码锁 ===== -->
+<div class="lock-screen" id="lockScreen">
+    <div class="glass lock-box">
+        <div class="lock-icon"><i class="fa-regular fa-heart"></i></div>
+        <div class="lock-title">一段心事</div>
+        <div class="lock-hint">提示：她的名字</div>
+        <input class="lock-input" type="text" id="passwordInput" placeholder="输入中文密码" onkeydown="if(event.key==='Enter')checkPassword()">
+        <button class="lock-btn" onclick="checkPassword()">打开</button>
+        <div class="lock-error" id="lockError">密码不对，再想想</div>
+        <div class="lock-footer">— 月色轻铺 · 晚风揉碎 —</div>
+    </div>
+</div>
+
+<!-- ===== 导航点 ===== -->
+<nav class="nav-dots" id="navDots" aria-label="章节导航"></nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+    <div class="hero-sub">—— 致我亲爱的少爷 ——</div>
+    <h1 class="hero-quote">月色轻铺万云片<br>晚风揉碎星千点</h1>
+    <p class="hero-desc" style="color:var(--text-muted); font-weight:300; letter-spacing:0.05em;">
+        盼往后朝暮相伴，四季同看<br>
+        琐碎日常皆藏温柔，岁岁无忧，爱意长久
+    </p>
+    <div class="hero-scroll">
+        <span>往下翻</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;"></i>
+    </div>
+</section>
+
+<!-- ===== 正文 ===== -->
+<div class="main-content">
+    <div class="container">
+
+        <!-- 前言 -->
+        <section class="section glass" data-section="0">
+            <div class="section-inner">
+                <div class="section-number">· 前 言 ·</div>
+                <h2 class="section-title">
+                    锦瑟无端五十弦<br>
+                    <span style="font-size:1rem; font-weight:400; color:var(--text-muted);">一弦一柱思华年</span>
+                </h2>
+                <p class="section-text">岁月极美，在于其必然的流逝。春花，秋月，夏日，冬雪。</p>
+                <p class="section-text">此篇文字不为冗余，只为哪怕纵隔千里，时跨百年，依就心有所托。</p>
+            </div>
+        </section>
+
+        <!-- 00 -->
+        <section class="section glass" data-section="1">
+            <div class="section-inner">
+                <div class="section-number">· 00 ·</div>
+                <h2 class="section-title">一见倾心，二见钟情</h2>
+                <p class="section-text">上高中前，我一直不相信感情。直到遇见了我可爱的少爷，我才方知何为真爱。</p>
+                <p class="section-text">哪怕军训时互不相识，但半倚在墙上翻阅书籍的模样，也让我心为之一动——</p>
+                <div class="quote-block">
+                    <p>这人怎么感觉在哪里见过？</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 01 -->
+        <section class="section glass" data-section="2">
+            <div class="section-inner">
+                <div class="section-number">· 01 ·</div>
+                <h2 class="section-title">
+                    庄生晓梦迷蝴蝶<br>
+                    <span style="font-size:1rem; font-weight:400; color:var(--text-muted);">望帝春心托杜鹃</span>
+                </h2>
+                <p class="section-text">自高一开学之日起，我总于喧嚣人群里悄然寻觅她的踪迹，将无处吐露的慕意，藏匿于课间擦肩的刹那、课堂对望的瞬息。</p>
+                <p class="section-text">似庄周沉溺缥缈蝶梦一般，我深陷细碎的遐思，这份未曾宣于口的眷恋，便效彷徨常，<span class="highlight">托付于日常点滴的光景之中</span>。</p>
+            </div>
+        </section>
+
+        <!-- 02 -->
+        <section class="section glass" data-section="3">
+            <div class="section-inner">
+                <div class="section-number">· 02 ·</div>
+                <h2 class="section-title">
+                    并刀如水，吴盐似雪<br>
+                    <span style="font-size:1rem; font-weight:400; color:var(--text-muted);">纤手破新橙</span>
+                </h2>
+                <p class="section-text">后来的我们关系越走越近，从化学在团课的谈天说地，到期末课间时的博弈，再到《原神》里的跑图。</p>
+                <p class="section-text">彼时只道是寻常嬉戏，如今思之，那泼茶般的雅趣，<span class="highlight">早已浸透岁月，胜却人间无数喧阗</span>。</p>
+            </div>
+        </section>
+
+        <!-- 03 -->
+        <section class="section glass" data-section="4">
+            <div class="section-inner">
+                <div class="section-number">· 03 ·</div>
+                <h2 class="section-title">
+                    识尽千千万万人<br>
+                    <span style="font-size:1rem; font-weight:400; color:var(--text-muted);">终不似、伊家好</span>
+                </h2>
+                <p class="section-text">曾识遍人间烟火，千帆过尽，万木凋零，皆不及她眉目间一瞬清光。</p>
+                <p class="section-text">世间无数相逢，不过擦肩；唯她驻足，便成永恒。</p>
+                <div class="divider"></div>
+                <p class="section-text">至此，沧海桑田不过尔尔，弱水三千只取一瓢——</p>
+                <div class="quote-block">
+                    <p>非因你最好，而是我的心，在她面前，再容不下旁人了。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 尾言 -->
+        <section class="section glass" data-section="5">
+            <div class="section-inner">
+                <div class="section-number">· 尾 言 ·</div>
+                <h2 class="section-title">月色轻铺万云片·晚风揉碎星千点</h2>
+                <div class="epilogue">
+                    <p class="epilogue-text">
+                        盼往后朝暮相伴，四季同看<br>
+                        琐碎日常皆藏温柔<br>
+                        岁岁无忧，爱意长久
+                    </p>
+                    <div class="divider" style="margin:2rem auto;"></div>
+                    <p class="epilogue-quote">— 致我亲爱的少爷 —</p>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+    // ===== 密码验证 =====
+    const CORRECT_PASSWORD = '周靓菲';
+
+    function checkPassword() {
+        const input = document.getElementById('passwordInput');
+        const error = document.getElementById('lockError');
+        if (input.value.trim() === CORRECT_PASSWORD) {
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        } else {
+            error.classList.add('show');
+            input.value = '';
+            input.focus();
+            setTimeout(() => error.classList.remove('show'), 2500);
+        }
+    }
+
+    // ===== 导航点 =====
+    const sections = document.querySelectorAll('.section');
+    const navDots = document.getElementById('navDots');
+    const sectionNames = ['前言', '一见倾心', '庄生晓梦', '并刀如水', '识尽千万', '尾言'];
+
+    sectionNames.forEach((name, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'nav-dot';
+        dot.setAttribute('aria-label', name);
+        dot.setAttribute('title', name);
+        dot.dataset.index = i;
+        dot.addEventListener('click', () => {
+            const target = document.querySelector(`[data-section="${i}"]`);
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+        navDots.appendChild(dot);
+    });
+
+    // ===== 滚动淡入 =====
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'fadeUp 0.8s ease-out';
+                entry.target.style.opacity = '1';
+            }
+        });
+    }, { threshold: 0.15 });
+
+    sections.forEach(s => {
+        s.style.opacity = '0';
+        sectionObserver.observe(s);
+    });
+
+    // ===== 导航高亮 =====
+    const dots = document.querySelectorAll('.nav-dot');
+
+    const navObserver = new IntersectionObserver((entries) => {
+        let activeIndex = -1;
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const idx = entry.target.dataset.section;
+                if (idx !== undefined && Number(idx) > activeIndex) {
+                    activeIndex = Number(idx);
+                }
+            }
+        });
+        if (activeIndex >= 0) {
+            dots.forEach((d, i) => d.classList.toggle('active', i === activeIndex));
+        }
+    }, { threshold: 0.3 });
+
+    sections.forEach(s => navObserver.observe(s));
+
+    // 默认隐藏滚动直到解锁
+    document.body.style.overflow = 'hidden';
+</script>
+
+</body>
+</html>
